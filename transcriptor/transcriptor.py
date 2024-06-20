@@ -5,7 +5,7 @@ from pyannote.audio import Audio, Pipeline
 from pyannote.core import Segment
 import librosa
 from tqdm import tqdm
-from transcription import Transcription
+from .transcription import Transcription
 from time import time
 # Load environment variables from .env file
 load_dotenv()
@@ -62,10 +62,3 @@ class Transcriptor:
             result = self.model.transcribe(waveform, fp16=False)
             transcriptions.append((speaker, result['text']))
         return Transcription(audio_file_path, transcriptions)
-
-
-if __name__ == "__main__":
-    transcriptor = Transcriptor()
-    transcriptions = transcriptor.transcribe_audio(
-        audio_file_path="audio-test/meeting-clip1.wav")
-    print(transcriptions)
