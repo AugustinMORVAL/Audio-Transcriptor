@@ -41,11 +41,7 @@ class Transcript:
         if self.HF_TOKEN is None:
             raise ValueError("""HF_TOKEN not found in environment variables.
                              Try to run : export HF_TOKEN="your_hf_token""")
-        self.transcriptions = self.transcribe_audio()
-
-
-    def find_speaker_change(self, audio_data: np.ndarray, sample_rate: int, threshold: float = 0.05) -> list:
-        pass
+        self.transcriptions = []
 
     def find_name(self) -> str:
         pattern = r'/(.+?)\.wav'
@@ -107,10 +103,11 @@ class Transcript:
                 result = model.transcribe(waveform, fp16=False)
                 transcriptions.append((speaker, result['text']))
                 pbar.update(1)
+        self.transcriptions = transcriptions
         for speaker, text in transcriptions:
             print(f"{speaker}: {text}")
             sleep(0.5)
-        return transcriptions
+        return self
 
 
     def save(self, directory: str =  "transcripts") -> None:
