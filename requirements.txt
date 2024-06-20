@@ -1,7 +1,6 @@
-os
-whisper
+git+https://github.com/openai/whisper.git 
 pyannote.audio
-numpy  
+numpy<2.0.0  
 librosa
 tqdm
 python-dotenv
