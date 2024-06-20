@@ -1,4 +1,1 @@
-SPEAKER_00:  The stale smell of old beer lingers. It takes heat to bring out the odor. The stale smell of old beer lingers. It takes heat to bring out the odor.
-SPEAKER_00:  A cold dip restores health and zest. A salt pickled taste fine with ham. A cold dip restores health and zest. A salt pickled taste fine with ham.
-SPEAKER_00:  Tacos Alpastora are my favorite. Tacos Alpastora are my favorite.
-SPEAKER_00:  A zestful food is the hot cross bun. A zestful food is the hot cross bun.
+SPEAKER_00:  The stale smell of old beer lingers. It takes heat to bring out the odor. The stale smell of old beer lingers. It takes heat to bring out the odor. A cold dip restores health and zest. A salt pickled taste fine with ham. A cold dip restores health and zest. A salt pickled taste fine with ham. Tacos Alpastora are my favorite. Tacos Alpastora are my favorite. A zestful food is the hot cross bun. A zestful food is the hot cross bun.
