@@ -1,2 +1,3 @@
 from .transcriptor import Transcriptor
-__all__ = ["Transcriptor"]
+from .audio_processing import Processor
+__all__ = ["Transcriptor", "Processor"]

@@ -1,5 +1,5 @@
 from pyscript import Transcriptor
-from pyscript import Audio
+from pyscript import audio_recording as recorder
 import speech_recognition as sr
 
 def ask_user() -> int:
@@ -11,18 +11,14 @@ def ask_user() -> int:
     mic_index = int(input('Enter the number of the device : '))
     device = available_inputs[mic_index]
     print(f'You selected {device} as audio input.')
-    print(mic_index)
     return mic_index
 
 transcriptor = Transcriptor()
-recorder = Audio()
 
-
-device_index =  ask_user()
-
+filename = input("\nEnter the name of the audio file (Press Enter for default): ")
 Input = input("Press Enter to start recording...")
 if Input == "":
-    recording = recorder.micro_recording(device_index=device_index)
+    recording = recorder.micro_recording(file_name=filename)
 
     transcription = transcriptor.transcribe_audio(recording)
     transcription.save()

@@ -7,19 +7,57 @@ import librosa
 from tqdm import tqdm
 from .transcription import Transcription
 from time import time
+
 # Load environment variables from .env file
 load_dotenv()
 
-
 class Transcriptor:
+    """
+    A class for transcribing and diarizing audio files.
+
+    This class uses the Whisper model for transcription and the PyAnnote speaker diarization pipeline for speaker identification.
+
+    Parameters
+    ----------
+    None
+
+    Attributes
+    ----------
+    HF_TOKEN : str
+        The Hugging Face token for accessing the PyAnnote speaker diarization pipeline.
+    model : whisper.model.Whisper
+        The Whisper model for transcription.
+    pipeline : pyannote.audio.pipelines.SpeakerDiarization
+        The PyAnnote speaker diarization pipeline.
+    audio : pyannote.core.audio.Audio
+        The PyAnnote audio object.
+
+    Usage
+    -----
+    >>> transcript = Transcriptor()
+    >>> transcription = transcript.transcribe_audio("/path/to/audio.wav")
+    >>> transcription.save("/path/to/transcripts")
+    """
+
     def __init__(self):
         self.HF_TOKEN = os.getenv("HF_TOKEN")
         if self.HF_TOKEN is None:
-            raise ValueError(
-                "HF_TOKEN not found in environment variables. Try to run: export HF_TOKEN='your_hf_token'")
-        self.model, self.pipeline, self.audio = self.initialize_whisper()
+            raise ValueError("HF_TOKEN not found. Please store token in .env")
+        self.model, self.pipeline, self.audio = self.initialize_models()
 
-    def initialize_whisper(self):
+    def initialize_models(self):
+        """
+        Initializes the Whisper model and the PyAnnote speaker diarization pipeline.
+
+        Returns
+        -------
+        model : whisper.model.Whisper
+            The Whisper model for transcription.
+        pipeline : pyannote.audio.pipelines.SpeakerDiarization
+            The PyAnnote speaker diarization pipeline.
+        audio : pyannote.core.audio.Audio
+            The PyAnnote audio object.
+        """
         print("Initializing whisper...")
         model = whisper.load_model("base")
         pipeline = Pipeline.from_pretrained(
@@ -29,6 +67,19 @@ class Transcriptor:
         return model, pipeline, audio
 
     def transcribe_audio(self, audio_file_path: str) -> Transcription:
+        """
+        Transcribes an audio file.
+
+        Parameters
+        ----------
+        audio_file_path : str
+            The path to the audio file to be transcribed.
+
+        Returns
+        -------
+        transcription : Transcription
+            A Transcription object containing the speaker's label and their corresponding transcription.
+        """
         try:
             print("Processing audio file...")
             top = time()
