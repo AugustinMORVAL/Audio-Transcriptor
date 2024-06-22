@@ -25,7 +25,7 @@ class Transcriptor:
         pipeline = Pipeline.from_pretrained(
             "pyannote/speaker-diarization-3.1", use_auth_token=self.HF_TOKEN)
         audio = Audio()
-        print("Whisper initialized successfully .")
+        print("Whisper initialized successfully.")
         return model, pipeline, audio
 
     def transcribe_audio(self, audio_file_path: str) -> Transcription:

@@ -1,22 +1,14 @@
-import re
 import os
 
 
 class Transcription:
     def __init__(self, audio_file_path: str, transcriptions: list[str]):
         self.audio_file_path = audio_file_path
-        self.filename = self.find_name(audio_file_path)
+        self.filename = os.path.splitext(os.path.basename(audio_file_path))[0]
         self.transcriptions = self.group_by_speaker(transcriptions)
 
     def __repr__(self) -> str:
         return "\n".join([f"\033[93m{speaker}:\033[0m\n {text}" for speaker, text in self.transcriptions])
-
-    def find_name(self, file_path) -> str:
-        pattern = r'/(.+?)\.wav'
-        match = re.search(pattern, file_path)
-        if match:
-            return match.group(1)
-        return "transcript"
 
     def group_by_speaker(self, transcriptions: list[str]):
         speaker_transcriptions = []
@@ -45,4 +37,4 @@ class Transcription:
             for (speaker, text) in self.transcriptions:
                 if text:
                     f.write(f"{speaker}: {text}\n")
-                    print(f"Transcription saved to {saving_path}")
+            print(f"Transcription saved to {saving_path}")
