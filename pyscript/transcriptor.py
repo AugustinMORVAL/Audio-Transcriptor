@@ -1,12 +1,12 @@
 import os
 from dotenv import load_dotenv
 import whisper
-from pyannote.audio import Audio, Pipeline
-from pyannote.core import Segment
+from pyannote.audio import Pipeline
 import librosa
 from tqdm import tqdm
 from .transcription import Transcription
 from time import time
+import spacy
 
 # Load environment variables from .env file
 load_dotenv()
@@ -17,10 +17,6 @@ class Transcriptor:
 
     This class uses the Whisper model for transcription and the PyAnnote speaker diarization pipeline for speaker identification.
 
-    Parameters
-    ----------
-    None
-
     Attributes
     ----------
     HF_TOKEN : str
@@ -29,8 +25,6 @@ class Transcriptor:
         The Whisper model for transcription.
     pipeline : pyannote.audio.pipelines.SpeakerDiarization
         The PyAnnote speaker diarization pipeline.
-    audio : pyannote.core.audio.Audio
-        The PyAnnote audio object.
 
     Usage
     -----
@@ -43,7 +37,7 @@ class Transcriptor:
         self.HF_TOKEN = os.getenv("HF_TOKEN")
         if self.HF_TOKEN is None:
             raise ValueError("HF_TOKEN not found. Please store token in .env")
-        self.model, self.pipeline, self.audio = self.initialize_models()
+        self.model, self.pipeline = self.initialize_models()
 
     def initialize_models(self):
         """
@@ -55,16 +49,13 @@ class Transcriptor:
             The Whisper model for transcription.
         pipeline : pyannote.audio.pipelines.SpeakerDiarization
             The PyAnnote speaker diarization pipeline.
-        audio : pyannote.core.audio.Audio
-            The PyAnnote audio object.
         """
-        print("Initializing whisper...")
+        print("Initializing Whisper model...")
         model = whisper.load_model("base")
-        pipeline = Pipeline.from_pretrained(
-            "pyannote/speaker-diarization-3.1", use_auth_token=self.HF_TOKEN)
-        audio = Audio()
-        print("Whisper initialized successfully.")
-        return model, pipeline, audio
+        print("Building diarization pipeline...")
+        pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token=self.HF_TOKEN)
+        print("Models initialized successfully.")
+        return model, pipeline
 
     def transcribe_audio(self, audio_file_path: str) -> Transcription:
         """
@@ -80,6 +71,7 @@ class Transcriptor:
         transcription : Transcription
             A Transcription object containing the speaker's label and their corresponding transcription.
         """
+        # Diarization
         try:
             print("Processing audio file...")
             top = time()
@@ -87,8 +79,9 @@ class Transcriptor:
             print(f"Audio file processed successfully in {time()-top}.")
         except Exception as e:
             raise RuntimeError(f"Failed to process the audio file: {e}")
-
         segments = list(diarization.itertracks(yield_label=True))
+
+        # Transcription
         transcriptions = []
         duration = librosa.get_duration(filename=audio_file_path)
         for turn, _, speaker in tqdm(segments, desc="Writing transcript", unit="segment", ncols=100, colour="green"):
@@ -97,19 +90,11 @@ class Transcriptor:
                 end = duration
             else:
                 end = turn.end
-            segment = Segment(start, end)
             try:
-                waveform, sample_rate = self.audio.crop(
-                    audio_file_path, segment)
+                waveform, sample_rate = librosa.load(audio_file_path, sr=16000, offset=start, duration=end - start)
             except Exception as e:
-                raise RuntimeError(
-                    f"Failed to load the audio segment: {e}")
-
-            waveform = waveform.numpy().flatten()
-            if sample_rate != 16000:
-                waveform = librosa.resample(
-                    waveform, orig_sr=sample_rate, target_sr=16000)
-
+                raise RuntimeError(f"Failed to load the audio segment: {e}")
+            
             result = self.model.transcribe(waveform, fp16=False)
             transcriptions.append((speaker, result['text']))
         return Transcription(audio_file_path, transcriptions)
