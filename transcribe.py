@@ -1,7 +1,6 @@
 from pyscript import Transcriptor
 import os
 
-
 def ask_user(folder):
     audio_files = os.listdir(folder)
     audios = {str(i+1): name for i, name in enumerate(audio_files)
