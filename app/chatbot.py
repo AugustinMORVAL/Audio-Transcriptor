@@ -49,6 +49,7 @@ st.markdown("Nice to see you again!")
 # Initialize a history for the chat
 if "messages" not in st.session_state:
     st.session_state.messages = []
+st.session_state.messages.append({"role": "system", "content": system_prompt})
 
 # Display chat messages from history when the application is restarted
 for message in st.session_state.messages:

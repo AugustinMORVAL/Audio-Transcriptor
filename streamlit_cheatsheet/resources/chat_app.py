@@ -105,5 +105,3 @@ def chatting_app():
             st.code(code_snippet, language='python')
         """
         st.code(code_snippet, language='python')
-
-    st.subheader("Chatbot with historical datas")
