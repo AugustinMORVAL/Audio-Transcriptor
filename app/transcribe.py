@@ -60,7 +60,7 @@ st.set_page_config(
     page_icon="🗎", 
     layout="centered"
 )
-st.logo("img\logo-Cyy6uKYt.png")
+st.logo("img/logo-Cyy6uKYt.png")
 st.title("Audio Transcription")
 st.markdown("Upload an audio file and click the **Transcript** button to see the transcription.")
 

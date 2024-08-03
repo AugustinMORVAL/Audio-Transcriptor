@@ -27,30 +27,31 @@ models = {
 llm = ChatGroq(model_name=models["Gemma Model 2 - 9B"], temperature=0.1, api_key=GROQ_API_KEY)
 
 def load_file(file):
-    try:
-        pdf_reader = PdfReader(file)
-        formatted_document = []
-        for page in pdf_reader.pages:
-            formatted_document.append(page.extract_text())
+    with st.spinner("Loading and processing the file..."): 
+        try:
+            pdf_reader = PdfReader(file)
+            formatted_document = ""
+            for page in pdf_reader.pages:
+                formatted_document += page.extract_text()
 
-        text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        chunks = text_splitter.split_text(formatted_document)
+            text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+            chunks = text_splitter.split_text(formatted_document)
 
-        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+            embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-        store = FAISS.from_texts(chunks, embeddings)
+            store = FAISS.from_texts(chunks, embeddings)
 
-        return store
-    except PdfReadError:
-        raise ValueError("The uploaded file is not a valid PDF.")
-    except Exception as e:
-        raise Exception(f"An error occurred: {str(e)}")
+            return store
+        except PdfReadError:
+            raise ValueError("The uploaded file is not a valid PDF.")
+        except Exception as e:
+            raise Exception(f"An error occurred: {str(e)}")
 
 def get_response(model, store, query):
     if not isinstance(store, FAISS):
         raise st.error("The 'store' variable must be an instance of the FAISS class.")
     
-    qa = RetrievalQA.from_chain_type(llm=model, chain_type="stuff", retriever=store.as_retriever())
+    qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=store.as_retriever())
     response = qa.invoke(query)
     return response
     
@@ -71,8 +72,8 @@ if reset_conversation:
 
 if uploaded_file is not None:
 
-    with st.spinner("Loading and processing the file..."): 
-        st.session_state.context = load_file(uploaded_file)
+    st.session_state.context = load_file(uploaded_file)
+    st.session_state.messages.append({"role": "system", "content": st.session_state.context})
 
     # Display chat messages from history when the application is restarted
     for message in st.session_state.messages:
