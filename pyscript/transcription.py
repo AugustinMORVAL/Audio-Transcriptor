@@ -25,15 +25,18 @@ class Transcription:
     >>> transcription = Transcription("/path/to/audio.wav", [("Speaker 1", "Transcription 1"), ("Speaker 1", "Transcription 2"), ("Speaker 2", "Transcription 3")])
     >>> print(transcription)
     >>> transcription.save("/path/to/transcripts")
+    >>> transcription.name_speakers_interactively()
     """
 
-    def __init__(self, audio_file_path: str, transcriptions: list[str]):
+    def __init__(self, audio_file_path: str, transcriptions: list[str], segments: list[str]):
         self.audio_file_path = audio_file_path
         self.filename = os.path.splitext(os.path.basename(audio_file_path))[0]
         self.transcriptions = self.group_by_speaker(transcriptions)
+        self.speaker_names = {}
+        self.segments = segments
 
     def __repr__(self) -> str:
-        return "\n".join([f"\033[93m{speaker}:\033[0m\n {text}" for speaker, text in self.transcriptions])
+        return "\n".join([f"\033[93m{self.get_speaker_name(speaker)}:\033[0m\n {text}" for speaker, text in self.transcriptions])
 
     def group_by_speaker(self, transcriptions: list[str]) -> list[str]:
         """
@@ -85,5 +88,33 @@ class Transcription:
         with open(saving_path, 'w') as f:
             for (speaker, text) in self.transcriptions:
                 if text:
-                    f.write(f"{speaker}: {text}\n")
+                    f.write(f"{self.get_speaker_name(speaker)}: {text}\n")
         print(f"Transcription saved to {saving_path}")
+
+    def name_speakers_interactively(self) -> None:
+        """
+        Interactively assigns names to speakers in the transcriptions.
+        Provides a preview of one sentence for each speaker to help recognize who is speaking.
+        """
+        processed_speakers = []  
+        for speaker, full_text in self.transcriptions:
+            if speaker in processed_speakers:
+                continue  
+            preview = full_text.split('.')[0] + '.'  # Get the first sentence
+            print(f"\nCurrent speaker: {speaker}")
+            print(f"Preview: {preview}")
+            new_name = input(f"Enter a name for {speaker} (or press Enter to skip): ").strip()
+            if new_name:
+                self.speaker_names[speaker] = new_name
+                print(f"Speaker {speaker} renamed to {new_name}")
+            else:
+                print(f"Skipped renaming {speaker}")
+            processed_speakers.append(speaker)
+        print("\nSpeaker naming completed.")
+        print(f"Updated speaker names: {self.speaker_names}")
+
+    def get_speaker_name(self, speaker: str) -> str:
+        """
+        Retrieves the name of the speaker, using the updated name if available.
+        """
+        return self.speaker_names.get(speaker, speaker)

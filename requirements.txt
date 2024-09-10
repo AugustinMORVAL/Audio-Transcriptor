@@ -1,7 +1,8 @@
-git+https://github.com/openai/whisper.git 
+openai-whisper
 pyannote.audio
 librosa
 tqdm
 python-dotenv
 termcolor
-spacy
+pydub
+SpeechRecognition
