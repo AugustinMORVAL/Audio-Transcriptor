@@ -1,5 +1,21 @@
 # Audio Transcription and Diarization Tool
 
+## Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Usage](#usage)
+  - [Basic Example](#basic-example)
+  - [Audio Processing Example](#audio-processing-example)
+  - [Transcribing an existing audio file or an audio recording](#transcribing-an-existing-audio-file-or-an-audio-recording)
+- [Key Components](#key-components)
+  - [Transcriptor](#transcriptor)
+  - [AudioProcessor](#audioprocessor)
+  - [AudioRecording](#audiorecording)
+- [Contributing](#contributing)
+- [Acknowledgments](#acknowledgments)
+
 ## Overview
 
 This project provides a robust set of tools for transcribing audio files using the Whisper model and performing speaker diarization with PyAnnote. It allows users to process audio files, record audio, and save transcriptions with speaker identification.
@@ -58,6 +74,59 @@ pip install -r requirements.txt
      ```
 
 ## Usage
+
+### Basic Example
+
+Here's a basic example of how to use the Transcriptor class to transcribe an audio file:
+
+```python
+from pyscript import Transcriptor
+
+# Initialize the Transcriptor
+transcriptor = Transcriptor()
+
+# Transcribe an audio file
+transcription = transcriptor.transcribe_audio("/path/to/audio")
+
+# Interactively name
+transcription.get_name_speakers()
+
+# Save the transcription
+transcription.save()
+```
+
+This example will:
+1. Initialize the Transcriptor with default settings
+2. Transcribe the specified audio file
+3. Prompt you to name the speakers interactively
+4. Save the transcription to a text file
+
+### Audio Processing Example
+
+You can also use the AudioProcessor class to preprocess your audio files:
+
+```python
+from pyscript import AudioProcessor
+
+# Load an audio file
+audio = AudioProcessor("/path/to/audio.mp3")
+
+# Display audio details
+audio.display_details()
+
+# Convert the audio to WAV format and resample to 16000 Hz
+audio.convert_to_wav()
+
+# Display updated audio details
+audio.display_changes()
+```
+
+This example will:
+1. Load an audio file
+2. Display audio details
+3. Convert the audio to WAV format and resample to 16000 Hz
+4. Display updated audio details
+
 
 ### Transcribing an existing audio file or an audio recording
 
