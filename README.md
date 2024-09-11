@@ -26,6 +26,10 @@ To run this project, you need Python 3.7+ and the following packages:
 - `termcolor`
 - `pydub`
 - `SpeechRecognition`
+- `pyaudio`
+- `tabulate`
+- `soundfile`
+- `torch`
 
 You can install the required packages using:
 
@@ -53,30 +57,24 @@ pip install -r requirements.txt
      HF_TOKEN=your_hugging_face_token_here
      ```
 
-## Example of usage
+## Usage
 
-### Transcribing Audio Files
-To transcribe an audio file, run the following command:
+### Transcribing an existing audio file or an audio recording
+
+To transcribe an audio file or record and transcribe audio, run:
 
 ```bash
-python examples/transcribe.py
+python example.py
 ```
 
 You will be prompted to:
-1. Select an audio file from the `audio-test` folder
-2. Choose whether to save the transcript
-
-### Recording and Transcribing Audio
-To record audio and transcribe it, use:
-
-```bash
-python examples/record.py
-```
-
-You will be prompted to:
-1. Select an input device
-2. Provide a name for the audio file (optional)
-3. Start recording
+1. Choose between using an existing audio file or recording new audio
+2. If using an existing file:
+   - Select an audio file from the `audio-test` folder
+   - Choose whether to transcribe one or all files
+3. If recording new audio:
+   - Provide a name for the audio file (optional)
+   - Start recording
 
 ## Key Components
 
@@ -104,10 +102,11 @@ The `AudioProcessor` class (in `pyscript/audio_processing.py`) handles audio fil
 - Loading audio files
 - Resampling
 - Converting to WAV format
+- Displaying audio file details and changes
 
 ### AudioRecording
 
-The `audio_recording.py` module provides functions for recording audio from a microphone and checking input devices.
+The `audio_recording.py` module provides functions for recording audio from a microphone, checking input devices, and saving audio files.
 
 ## Contributing
 

@@ -6,3 +6,8 @@ python-dotenv
 termcolor
 pydub
 SpeechRecognition
+pyaudio
+tabulate
+soundfile
+torch
+numpy
