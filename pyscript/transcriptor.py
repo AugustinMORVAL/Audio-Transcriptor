@@ -50,7 +50,7 @@ class Transcriptor:
             model_name,
             device=device)
         print("Building diarization pipeline...")
-        self.diarization_model = Pipeline.from_pretrained(
+        self.pipeline = Pipeline.from_pretrained(
             "pyannote/speaker-diarization-3.1", use_auth_token=self.HF_TOKEN).to(torch.device(device))
         print("Setup completed successfully!")
 
@@ -60,33 +60,30 @@ class Transcriptor:
         """
         try:
             print("Processing audio file...")
+            processed_audio = self.process_audio(audio_file_path)
+            audio, sr, duration = processed_audio.load_as_array(), processed_audio.sample_rate, processed_audio.duration
+            
+            print("Diarization in progess...")
             start_time = time()
-
-            # audio_file_path = self.convert_to_wav(audio_file_path)
-            audio, sr, duration = self.load_audio(audio_file_path)
             diarization = self.perform_diarization(audio_file_path)
+            print(f"Diarization completed in {time() - start_time:.2f} seconds.")
             segments = list(diarization.itertracks(yield_label=True))
-            print(f"Audio file processed successfully in {time() - start_time:.2f} seconds.")
         except Exception as e:
             raise RuntimeError(f"Failed to process the audio file: {e}")
 
-        transcriptions = self.transcribe_segments(audio, sr, duration, diarization)
+        print("Transcribing segments...")
+        transcriptions = self.transcribe_segments(audio, sr, duration, segments)
         return Transcription(audio_file_path, transcriptions, segments)
 
-    def convert_to_wav(self, audio_file_path: str) -> str:
-        """Convert audio to WAV format."""
-        file_extension = os.path.splitext(audio_file_path)[1].lower()
-        if file_extension != '.wav':
-            wav_file_path = os.path.splitext(audio_file_path)[0] + '.wav'
-            audio_file_path = AudioProcessor.convert_to_wav(audio_file_path, wav_file_path)
-            print(f"Converted audio file to WAV: {audio_file_path}")
-        return audio_file_path
-
-    def load_audio(self, audio_file_path: str):
-        """Load audio file and return audio data, sample rate, and duration."""
-        audio, sr = librosa.load(audio_file_path, sr=16000)
-        duration = librosa.get_duration(y=audio, sr=sr)
-        return audio, sr, duration
+    def process_audio(self, audio_file_path: str) -> AudioProcessor:
+        """Process the audio file to ensure it meets the requirements for transcription."""
+        processed_audio = AudioProcessor(audio_file_path)
+        if processed_audio.format != ".wav":
+            processed_audio.convert_to_wav()
+        if processed_audio.sample_rate != 16000:
+            processed_audio.resample()
+        processed_audio.show_details()
+        return processed_audio
 
     def perform_diarization(self, audio_file_path: str):
         """Perform speaker diarization on the audio file."""
