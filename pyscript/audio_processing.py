@@ -12,26 +12,33 @@ class AudioProcessor:
          self.format = os.path.splitext(os.path.basename(audio_file))[1]
          self.duration = librosa.get_duration(filename=audio_file)
          self.sample_rate = librosa.get_samplerate(audio_file)
+         self.changes = []
+         self.load_details()
 
-    def show_details(self):
-        """
-        Diplay the attributes of the audio file.
-
-        Attributes:
-        -----------
-        name : str
-        format : str
-        duration : float
-        sample_rate : int
-        """
+    # File information methods
+    def load_details(self):
+        """Save the attributes of the audio file."""
         data = [
             ["File Name", self.name],
             ["File Format", self.format],
             ["Duration", f"{self.duration} seconds"],
             ["Sample Rate", f"{self.sample_rate} Hz"]
         ]
-        print(tabulate(data, headers=["Attribute", "Value"], tablefmt="outline"))
+        table = tabulate(data, headers=["Attribute", "Value"], tablefmt="outline")
+        self.changes.append(table)
+        return table
+    
+    def display_details(self):
+        """Display the details of the audio file."""
+        print(self.changes[-1])
 
+    def display_changes(self):
+        """Display the changes made to the audio file."""
+        data1 = self.changes[0]
+        data2 = self.changes[-1]
+        print(f"{data1} ===> {data2}")
+
+    # Audio processing methods
     def load_as_array(self, sample_rate: int = 16000) -> np.ndarray:
         """
         Load an audio file and convert it into a NumPy array.
@@ -54,22 +61,13 @@ class AudioProcessor:
             raise RuntimeError(f"Failed to load audio file: {e}")
         
     def resample_wav(self) -> str:
-        """
-        Resamples a WAV file to 16000 Hz for diarization purposes.
-
-        Returns
-        -------
-        str
-            The path to the resampled audio file.
-        """
-        output_path = 'resampled_files/' + self.name + '_resampled.wav'
+        output_path = os.path.join('resampled_files', f'{self.name}_resampled.wav')
         try:
             audio, sr = librosa.load(self.path)
             resampled_audio = librosa.resample(y=audio, orig_sr=sr, target_sr=16000)
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             sf.write(output_path, resampled_audio, 16000)
-            self.path = output_path
-            self.sample_rate = librosa.get_samplerate(output_path)
+            self._update_file_info(output_path)
             return output_path
         except Exception as e:
             raise RuntimeError(f"Failed to resample audio file: {e}")
@@ -82,17 +80,22 @@ class AudioProcessor:
         -------
         str
             The path to the converted audio file.
-        """
-        output_path = 'converted_files/' + self.name + '.wav'
-        if self.format != '.wav':
-            try:
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)  # Ensure the directory exists
-                audio, sr = librosa.load(self.path)
-                resampled_audio = librosa.resample(y=audio, orig_sr=sr, target_sr=16000)
-                sf.write(output_path, resampled_audio, 16000)
-                self.path = output_path
-                self.sample_rate = librosa.get_samplerate(output_path)
-                self.format = '.wav'
-                return output_path
-            except Exception as e:
-                raise RuntimeError(f"Failed to convert audio file to WAV: {e}")
+        """        
+        output_path = os.path.join('converted_files', f'{self.name}.wav')
+        try:
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            audio, sr = librosa.load(self.path)
+            resampled_audio = librosa.resample(y=audio, orig_sr=sr, target_sr=16000)
+            sf.write(output_path, resampled_audio, 16000)
+            self._update_file_info(output_path)
+            return output_path
+        except Exception as e:
+            raise RuntimeError(f"Failed to convert audio file to WAV: {e}")
+
+    # Helper method
+    def _update_file_info(self, new_path):
+        """Update file information after processing."""
+        self.path = new_path
+        self.sample_rate = librosa.get_samplerate(new_path)
+        self.format = os.path.splitext(new_path)[1]
+        self.load_details()
