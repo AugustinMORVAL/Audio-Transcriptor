@@ -1,7 +1,10 @@
 # Audio Transcription and Diarization Tool
 
+## Overview
+
+This project provides a robust set of tools for transcribing audio files using the Whisper model and performing speaker diarization with PyAnnote. It allows users to process audio files, record audio, and save transcriptions with speaker identification.
+
 ## Table of Contents
-- [Overview](#overview)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Setup](#setup)
@@ -15,10 +18,6 @@
   - [AudioRecording](#audiorecording)
 - [Contributing](#contributing)
 - [Acknowledgments](#acknowledgments)
-
-## Overview
-
-This project provides a robust set of tools for transcribing audio files using the Whisper model and performing speaker diarization with PyAnnote. It allows users to process audio files, record audio, and save transcriptions with speaker identification.
 
 ## Features
 
