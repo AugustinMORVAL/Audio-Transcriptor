@@ -160,7 +160,7 @@ Usage:
 from pyscript import Transcriptor
 transcriptor = Transcriptor(model_size="base")
 transcription = transcriptor.transcribe_audio("/path/to/audio.wav")
-transcription.name_speakers_interactively()
+transcription.get_name_speakers()
 transcription.save()
 ```
 
