@@ -33,10 +33,15 @@ class AudioProcessor:
         print(self.changes[-1])
 
     def display_changes(self):
-        """Display the changes made to the audio file."""
-        data1 = self.changes[0]
-        data2 = self.changes[-1]
-        print(f"{data1} ===> {data2}")
+        """Display the changes made to the audio file side by side."""
+        table1 = self.changes[0].split('\n')
+        table2 = self.changes[-1].split('\n')
+
+        combined_table = []
+        for line1, line2 in zip(table1, table2):
+            combined_table.append([line1, '===>', line2])
+
+        print(tabulate(combined_table, tablefmt="plain"))
 
     # Audio processing methods
     def load_as_array(self, sample_rate: int = 16000) -> np.ndarray:
@@ -61,7 +66,7 @@ class AudioProcessor:
             raise RuntimeError(f"Failed to load audio file: {e}")
         
     def resample_wav(self) -> str:
-        output_path = os.path.join('resampled_files', f'{self.name}_resampled.wav')
+        output_path = os.path.join('resampled_files', f'{self.name}.wav')
         try:
             audio, sr = librosa.load(self.path)
             resampled_audio = librosa.resample(y=audio, orig_sr=sr, target_sr=16000)

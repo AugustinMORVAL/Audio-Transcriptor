@@ -72,7 +72,7 @@ class Transcription:
         os.makedirs(directory, exist_ok=True)
         saving_path = os.path.join(directory, f"{self.filename}_transcript.txt")
         
-        with open(saving_path, 'w') as f:
+        with open(saving_path, 'w', encoding='utf-8') as f:
             for speaker, text in self.transcriptions:
                 if text:
                     speaker_name = self.speaker_names.get(speaker, speaker)

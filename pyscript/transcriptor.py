@@ -56,6 +56,7 @@ class Transcriptor:
         try:
             print("Processing audio file...")
             processed_audio = self.process_audio(audio_file_path)
+            audio_file_path = processed_audio.path
             audio, sr, duration = processed_audio.load_as_array(), processed_audio.sample_rate, processed_audio.duration
             
             print("Diarization in progress...")
@@ -63,7 +64,7 @@ class Transcriptor:
             diarization = self.perform_diarization(audio_file_path)
             print(f"Diarization completed in {time() - start_time:.2f} seconds.")
             segments = list(diarization.itertracks(yield_label=True))
-            
+
             transcriptions = self.transcribe_segments(audio, sr, duration, segments)
             return Transcription(audio_file_path, transcriptions, segments)
         except Exception as e:
@@ -75,7 +76,7 @@ class Transcriptor:
         if processed_audio.format != ".wav":
             processed_audio.convert_to_wav()
         if processed_audio.sample_rate != 16000:
-            processed_audio.resample()
+            processed_audio.resample_wav()
         processed_audio.display_changes()
         return processed_audio
 
