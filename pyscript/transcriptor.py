@@ -118,13 +118,16 @@ class Transcriptor:
         processed_audio = AudioProcessor(audio_file_path)
         if processed_audio.format != ".wav":
             processed_audio.convert_to_wav()
+        
         if processed_audio.sample_rate != 16000:
             processed_audio.resample_wav()
+        
         if enhanced:
             parameters = processed_audio.optimize_enhancement_parameters()
             processed_audio.enhance_audio(noise_reduce_strength=parameters[0], 
-                                          voice_enhance_strength=parameters[1], 
-                                          volume_boost=parameters[2])
+                                        voice_enhance_strength=parameters[1], 
+                                        volume_boost=parameters[2])
+        
         processed_audio.display_changes()
         return processed_audio
 
@@ -135,10 +138,12 @@ class Transcriptor:
     def transcribe_segments(self, audio, sr, duration, segments):
         """Transcribe audio segments based on diarization."""
         transcriptions = []
+        
         for turn, _, speaker in tqdm(segments, desc="Transcribing segments", unit="segment", ncols=100, colour="green"):
             start = turn.start
             end = min(turn.end, duration)
             segment = audio[int(start * sr):int(end * sr)]
             result = self.model.transcribe(segment, fp16=True)
             transcriptions.append((speaker, result['text'].strip()))
+        
         return transcriptions

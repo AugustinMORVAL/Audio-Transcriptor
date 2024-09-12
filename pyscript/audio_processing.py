@@ -115,13 +115,12 @@ class AudioProcessor:
         Enhance audio quality by reducing noise and clarifying voices.
         """
         try:
-            y, sr = librosa.load(self.path)
-            # Remove the 'sr' argument when calling _enhance_audio_sample
+            y, sr = librosa.load(self.path, sr=16000)
             y_enhanced = self._enhance_audio_sample(y, noise_reduce_strength, voice_enhance_strength, volume_boost)
 
             output_path = os.path.join('enhanced_files', f'{self.name}_enhanced.wav')
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            sf.write(output_path, y_enhanced, 16000)
+            sf.write(output_path, y_enhanced, sr)
 
             self._update_file_info(output_path)
             return output_path
@@ -190,4 +189,5 @@ class AudioProcessor:
         self.path = new_path
         self.sample_rate = librosa.get_samplerate(new_path)
         self.format = os.path.splitext(new_path)[1]
+        self.duration = librosa.get_duration(path=new_path)
         self.load_details()
