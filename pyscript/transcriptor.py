@@ -19,17 +19,29 @@ class Transcriptor:
     Attributes
     ----------
     model_size : str
-        The size of the Whisper model to use for transcription.
+        The size of the Whisper model to use for transcription. Available options are:
+        - 'tiny': Fastest, lowest accuracy
+        - 'base': Fast, good accuracy for many use cases
+        - 'small': Balanced speed and accuracy
+        - 'medium': High accuracy, slower than smaller models
+        - 'large': High accuracy, slower and more resource-intensive
+        - 'large-v1': Improved version of the large model
+        - 'large-v2': Further improved version of the large model
+        - 'large-v3': Latest and most accurate version of the large model
     model : whisper.model.Whisper
         The Whisper model for transcription.
     pipeline : pyannote.audio.pipelines.SpeakerDiarization
         The PyAnnote speaker diarization pipeline.
 
     Usage:
-        >>> transcript = Transcriptor(model_size="large")
+        >>> transcript = Transcriptor(model_size="large-v3")
         >>> transcription = transcript.transcribe_audio("/path/to/audio.wav")
         >>> transcription.get_name_speakers()
         >>> transcription.save("/path/to/transcripts")
+
+    Note:
+        Larger models, especially 'large-v3', provide higher accuracy but require more 
+        computational resources and may be slower to process audio.
     """
 
     def __init__(self, model_size: str = "base"):
@@ -51,11 +63,26 @@ class Transcriptor:
         ).to(torch.device(device))
         print("Setup completed successfully!")
 
-    def transcribe_audio(self, audio_file_path: str) -> Transcription:
-        """Transcribe an audio file."""
+    def transcribe_audio(self, audio_file_path: str, enhanced: bool = False) -> Transcription:
+        """
+        Transcribe an audio file.
+
+        Parameters:
+        -----------
+        audio_file_path : str
+            Path to the audio file to be transcribed.
+        enhanced : bool, optional
+            If True, applies audio enhancement techniques to improve transcription quality.
+            This includes noise reduction, voice enhancement, and volume boosting.
+
+        Returns:
+        --------
+        Transcription
+            A Transcription object containing the transcribed text and speaker segments.
+        """
         try:
             print("Processing audio file...")
-            processed_audio = self.process_audio(audio_file_path)
+            processed_audio = self.process_audio(audio_file_path, enhanced)
             audio_file_path = processed_audio.path
             audio, sr, duration = processed_audio.load_as_array(), processed_audio.sample_rate, processed_audio.duration
             
@@ -70,13 +97,34 @@ class Transcriptor:
         except Exception as e:
             raise RuntimeError(f"Failed to process the audio file: {e}")
 
-    def process_audio(self, audio_file_path: str) -> AudioProcessor:
-        """Process the audio file to ensure it meets the requirements for transcription."""
+    def process_audio(self, audio_file_path: str, enhanced: bool = False) -> AudioProcessor:
+        """
+        Process the audio file to ensure it meets the requirements for transcription.
+
+        Parameters:
+        -----------
+        audio_file_path : str
+            Path to the audio file to be processed.
+        enhanced : bool, optional
+            If True, applies audio enhancement techniques to improve audio quality.
+            This includes optimizing noise reduction, voice enhancement, and volume boosting
+            parameters based on the audio characteristics.
+
+        Returns:
+        --------
+        AudioProcessor
+            An AudioProcessor object containing the processed audio file.
+        """
         processed_audio = AudioProcessor(audio_file_path)
         if processed_audio.format != ".wav":
             processed_audio.convert_to_wav()
         if processed_audio.sample_rate != 16000:
             processed_audio.resample_wav()
+        if enhanced:
+            parameters = processed_audio.optimize_enhancement_parameters()
+            processed_audio.enhance_audio(noise_reduce_strength=parameters[0], 
+                                          voice_enhance_strength=parameters[1], 
+                                          volume_boost=parameters[2])
         processed_audio.display_changes()
         return processed_audio
 
