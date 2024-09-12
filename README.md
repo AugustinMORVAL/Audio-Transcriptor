@@ -171,6 +171,8 @@ The `AudioProcessor` class (in `pyscript/audio_processing.py`) handles audio fil
 - Resampling
 - Converting to WAV format
 - Displaying audio file details and changes
+- Audio enhancement (noise reduction, voice enhancement, volume boost)
+- Automatic parameter optimization for audio enhancement
 
 ### AudioRecording
 
