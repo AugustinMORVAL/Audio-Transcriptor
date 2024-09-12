@@ -26,8 +26,29 @@ This project provides a robust set of tools for transcribing audio files using t
 - Interactive speaker naming during transcription
 - Record audio directly from a microphone
 - Save transcriptions to text files
-- Support for different Whisper model sizes
-- Audio preprocessing capabilities (resampling, format conversion)
+- Audio preprocessing capabilities (resampling, format conversion, audio enhancement)
+- Support for multiple Whisper model sizes
+
+## Supported Whisper Models
+
+This tool supports various Whisper model sizes and versions, allowing you to balance between accuracy and computational resources:
+
+- `tiny`: Fastest, lowest accuracy
+- `base`: Fast, good accuracy for many use cases
+- `small`: Balanced speed and accuracy
+- `medium`: High accuracy, slower than smaller models
+- `large`: High accuracy, slower and more resource-intensive
+- `large-v1`: Improved version of the large model
+- `large-v2`: Further improved version of the large model
+- `large-v3`: Latest and most accurate version of the large model
+
+You can specify the model size when initializing the Transcriptor:
+
+```python
+transcriptor = Transcriptor(model_size="base")
+```
+
+The default model size is "base" if not specified.
 
 ## Requirements
 
