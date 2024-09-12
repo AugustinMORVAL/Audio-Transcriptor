@@ -34,14 +34,23 @@ class AudioProcessor:
 
     def display_changes(self):
         """Display the changes made to the audio file side by side."""
-        table1 = self.changes[0].split('\n')
-        table2 = self.changes[-1].split('\n')
+        self.clean_duplicates_changes()
+        if len(self.changes) == 1:
+            self.display_details()
+        else:
+            table1 = self.changes[0].split('\n')
+            table2 = self.changes[-1].split('\n')
 
-        combined_table = []
-        for line1, line2 in zip(table1, table2):
-            combined_table.append([line1, '===>', line2])
+            combined_table = []
+            for line1, line2 in zip(table1, table2):
+                combined_table.append([line1, '===>', line2])
 
-        print(tabulate(combined_table, tablefmt="plain"))
+            print(tabulate(combined_table, tablefmt="plain"))
+
+    def clean_duplicates_changes(self):
+        """Remove duplicate consecutive changes from the audio file."""
+        self.changes = [change for i, change in enumerate(self.changes) 
+                        if i == 0 or change != self.changes[i-1]]
 
     # Audio processing methods
     def load_as_array(self, sample_rate: int = 16000) -> np.ndarray:
