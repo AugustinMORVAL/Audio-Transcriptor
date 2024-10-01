@@ -1,4 +1,6 @@
 import os
+from itertools import cycle
+from termcolor import colored
 
 class Transcription:
     """
@@ -25,10 +27,14 @@ class Transcription:
         self.transcriptions = self.group_by_speaker(transcriptions)
         self.speaker_names = {}
         self.segments = segments
+        self.colors = cycle(['red', 'green', 'blue', 'magenta', 'cyan', 'yellow'])
 
     def __repr__(self) -> str:
-        return "\n".join([f"\033[93m{self.speaker_names.get(speaker, speaker)}:\033[0m\n {text}" 
-                          for speaker, text in self.transcriptions])
+        result = []
+        for speaker, text in self.transcriptions:
+            speaker_name = self.speaker_names.get(speaker, speaker)
+            result.append(f"{speaker_name}:\n{text}")
+        return "\n\n".join(result)
 
     def group_by_speaker(self, transcriptions: list[str]) -> list[str]:
         """

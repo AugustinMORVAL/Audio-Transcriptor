@@ -5,6 +5,7 @@ from pyannote.audio import Pipeline
 import torch
 from tqdm import tqdm
 from time import time
+from transformers import pipeline
 from .transcription import Transcription
 from .audio_processing import AudioProcessor
 
@@ -28,6 +29,7 @@ class Transcriptor:
         - 'large-v1': Improved version of the large model
         - 'large-v2': Further improved version of the large model
         - 'large-v3': Latest and most accurate version of the large model
+        - 'large-v3-turbo': Optimized version of the large-v3 model for faster processing
     model : whisper.model.Whisper
         The Whisper model for transcription.
     pipeline : pyannote.audio.pipelines.SpeakerDiarization
@@ -55,7 +57,15 @@ class Transcriptor:
         """Initialize the Whisper model and diarization pipeline."""
         device = "cuda" if torch.cuda.is_available() else "cpu"
         print("Initializing Whisper model...")
-        self.model = whisper.load_model(self.model_size, device=device)
+        if self.model_size == "large-v3-turbo":
+            self.model = pipeline(
+                task="automatic-speech-recognition",
+                model="ylacombe/whisper-large-v3-turbo",
+                chunk_length_s=30,
+                device=device,
+            )
+        else:
+            self.model = whisper.load_model(self.model_size, device=device)
         print("Building diarization pipeline...")
         self.pipeline = Pipeline.from_pretrained(
             "pyannote/speaker-diarization-3.1", 
@@ -143,7 +153,10 @@ class Transcriptor:
             start = turn.start
             end = min(turn.end, duration)
             segment = audio[int(start * sr):int(end * sr)]
-            result = self.model.transcribe(segment, fp16=True)
+            if self.model_size == "large-v3-turbo":
+                result = self.model(segment)
+            else:
+                result = self.model.transcribe(segment, fp16=True)
             transcriptions.append((speaker, result['text'].strip()))
         
         return transcriptions
