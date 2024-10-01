@@ -11,3 +11,5 @@ tabulate
 soundfile
 torch
 numpy
+transformers
+gradio
