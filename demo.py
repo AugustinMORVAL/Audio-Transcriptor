@@ -2,7 +2,7 @@ import gradio as gr
 from pyscript import Transcriptor
 
 demo = gr.Blocks()
-transcriptor = Transcriptor("large-v3-turbo")
+transcriptor = Transcriptor(model_size="large-v3-turbo")
 
 microphone_transcribe = gr.Interface(
     fn=transcriptor.transcribe_audio,

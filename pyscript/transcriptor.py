@@ -55,22 +55,22 @@ class Transcriptor:
 
     def _setup(self):
         """Initialize the Whisper model and diarization pipeline."""
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print("Initializing Whisper model...")
         if self.model_size == "large-v3-turbo":
             self.model = pipeline(
                 task="automatic-speech-recognition",
                 model="ylacombe/whisper-large-v3-turbo",
                 chunk_length_s=30,
-                device=device,
+                device=self.device,
             )
         else:
-            self.model = whisper.load_model(self.model_size, device=device)
+            self.model = whisper.load_model(self.model_size, device=self.device)
         print("Building diarization pipeline...")
         self.pipeline = Pipeline.from_pretrained(
             "pyannote/speaker-diarization-3.1", 
             use_auth_token=self.HF_TOKEN
-        ).to(torch.device(device))
+        ).to(torch.device(self.device))
         print("Setup completed successfully!")
 
     def transcribe_audio(self, audio_file_path: str, enhanced: bool = False) -> Transcription:
@@ -143,7 +143,8 @@ class Transcriptor:
 
     def perform_diarization(self, audio_file_path: str):
         """Perform speaker diarization on the audio file."""
-        return self.pipeline(audio_file_path)
+        with torch.no_grad():
+            return self.pipeline(audio_file_path)
 
     def transcribe_segments(self, audio, sr, duration, segments):
         """Transcribe audio segments based on diarization."""
@@ -156,7 +157,7 @@ class Transcriptor:
             if self.model_size == "large-v3-turbo":
                 result = self.model(segment)
             else:
-                result = self.model.transcribe(segment, fp16=True)
+                result = self.model.transcribe(segment, fp16=self.device == "cuda")
             transcriptions.append((speaker, result['text'].strip()))
         
         return transcriptions
