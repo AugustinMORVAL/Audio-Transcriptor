@@ -209,29 +209,39 @@ class Transcriptor:
             dynamic_ncols=True,
             leave=True
         ) as pbar:
-            if self.model_size == "large-v3-turbo" and self.device == "cuda":
-                # Automatically determine batch size based on available GPU memory
-                total_memory = torch.cuda.get_device_properties(0).total_memory
-                reserved_memory = torch.cuda.memory_reserved(0)
-                allocated_memory = torch.cuda.memory_allocated(0)
-                free_memory = total_memory - reserved_memory - allocated_memory
-                
-                # Estimate memory per sample (conservative estimate: 500MB per audio segment)
-                memory_per_sample = 500 * 1024 * 1024
-                
-                # Calculate batch size leaving 20% memory buffer
-                batch_size = max(1, int((free_memory * 0.8) // memory_per_sample))
-                print(f"Automatically set batch size to {batch_size} based on available GPU memory")
-                
-                # Process in batches
-                for i in range(0, len(audio_segments), batch_size):
-                    batch = audio_segments[i:i + batch_size]
-                    results = self.model([segment for segment, _ in batch])
-                    for (_, speaker), result in zip(batch, results):
-                        transcriptions.append((speaker, result['text'].strip()))
-                    pbar.update(len(batch))
+            if self.device == "cuda":
+                try:
+                    total_memory = torch.cuda.get_device_properties(0).total_memory
+                    reserved_memory = torch.cuda.memory_reserved(0)
+                    allocated_memory = torch.cuda.memory_allocated(0)
+                    free_memory = total_memory - reserved_memory - allocated_memory
+                    
+                    memory_per_sample = 1024 * 1024 * 1024  # 1GB
+                    batch_size = max(1, min(4, int((free_memory * 0.7) // memory_per_sample)))
+                    print(f"Using batch size of {batch_size} for GPU processing")
+                    
+                    for i in range(0, len(audio_segments), batch_size):
+                        try:
+                            batch = audio_segments[i:i + batch_size]
+                            torch.cuda.empty_cache() 
+                            results = self.model([segment for segment, _ in batch])
+                            for (_, speaker), result in zip(batch, results):
+                                transcriptions.append((speaker, result['text'].strip()))
+                            pbar.update(len(batch))
+                        except RuntimeError as e:
+                            if "out of memory" in str(e):
+                                torch.cuda.empty_cache()
+                                for segment, speaker in batch:
+                                    results = self.model([segment])
+                                    transcriptions.append((speaker, results[0]['text'].strip()))
+                                    pbar.update(0.5)
+                            else:
+                                raise e
+                except Exception as e:
+                    print(f"GPU processing failed: {str(e)}. Falling back to CPU processing...")
+                    self.model = self.model.to('cpu')
+                    self.device = 'cpu'
             else:
-                # Sequential processing for CPU or regular whisper model
                 for segment, speaker in audio_segments:
                     if self.model_size == "large-v3-turbo":
                         result = self.model(segment)
