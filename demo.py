@@ -25,18 +25,22 @@ microphone_transcribe = gr.Interface(
 file_transcribe = gr.Interface(
     fn=transcriptor.transcribe_audio,
     inputs=[
-        gr.Audio(sources="upload", type="filepath", label="Audio file"),
-        gr.Radio([True, False], value=True, label="Enable audio enhancement"),
+        gr.Audio(
+            sources=["upload", "microphone"],
+            type="filepath",
+            label="Audio file"
+        ),
+        gr.Radio(
+            choices=[True, False],
+            value=True,
+            label="Enable audio enhancement"
+        ),
     ],
     outputs=[
         gr.Textbox(label="Transcription"),
-        # gr.File(label="Download Transcription"),
-        # gr.Textbox(label="Console Output", lines=10)
     ],
     title="Audio-Transcription leveraging Whisper Model",
-    description=(
-        "Transcribe microphone recording or audio inputs and return the transcription with speaker diarization."
-    ),
+    description="Transcribe microphone recording or audio inputs and return the transcription with speaker diarization.",
     allow_flagging="never",
 )
 

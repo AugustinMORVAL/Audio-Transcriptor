@@ -56,6 +56,7 @@ class Transcriptor:
     def _setup(self):
         """Initialize the Whisper model and diarization pipeline."""
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"Using device: {self.device}")
         print("Initializing Whisper model...")
         if self.model_size == "large-v3-turbo":
             self.model = pipeline(
@@ -90,6 +91,18 @@ class Transcriptor:
         Transcription
             A Transcription object containing the transcribed text and speaker segments.
         """
+        print(f"Received audio_file_path: {audio_file_path}")  # Debug print
+        print(f"Type of audio_file_path: {type(audio_file_path)}")  # Debug print
+        
+        if audio_file_path is None:
+            raise ValueError("No audio file was uploaded. Please upload an audio file.")
+        
+        if not isinstance(audio_file_path, (str, bytes, os.PathLike)):
+            raise ValueError(f"Invalid audio file path type: {type(audio_file_path)}")
+        
+        if not os.path.exists(audio_file_path):
+            raise FileNotFoundError(f"Audio file not found at path: {audio_file_path}")
+        
         try:
             print("Processing audio file...")
             processed_audio = self.process_audio(audio_file_path, enhanced)
@@ -105,7 +118,7 @@ class Transcriptor:
             transcriptions = self.transcribe_segments(audio, sr, duration, segments)
             return Transcription(audio_file_path, transcriptions, segments)
         except Exception as e:
-            raise RuntimeError(f"Failed to process the audio file: {e}")
+            raise RuntimeError(f"Failed to process the audio file: {str(e)}")
 
     def process_audio(self, audio_file_path: str, enhanced: bool = False) -> AudioProcessor:
         """

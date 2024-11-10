@@ -7,6 +7,8 @@ import scipy.ndimage
 import itertools
 from scipy.stats import pearsonr
 from tqdm import tqdm
+import torch
+import torchaudio
 
 class AudioProcessor:
 
@@ -127,12 +129,31 @@ class AudioProcessor:
         except Exception as e:
             raise RuntimeError(f"Failed to enhance audio: {e}")
 
+    def _compute_spectral_contrast(self, y, sr, n_bands=6, fmin=200.0, quantile=0.02, hop_length=512):
+        """
+        Compute spectral contrast using librosa.
+        Higher contrast generally indicates clearer speech separation from background.
+        """
+        S = np.abs(librosa.stft(y, hop_length=hop_length))
+        contrast = librosa.feature.spectral_contrast(
+            S=S, 
+            sr=sr,
+            n_bands=n_bands,
+            fmin=fmin,
+            quantile=quantile,
+            hop_length=hop_length
+        )
+        return np.mean(contrast)
+
     def optimize_enhancement_parameters(self, step=0.25, max_iterations=50, sample_duration=30):
         """
         Find optimal parameters for audio enhancement using grid search on a sample.
         """
-        y_orig, sr = librosa.load(self.path, duration=sample_duration)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
+        y_orig, sr = librosa.load(self.path, duration=sample_duration)
+        y_orig_tensor = torch.tensor(y_orig, device=device)
+
         param_ranges = [
             np.arange(0.25, 1.5, step),  # noise_reduce_strength
             np.arange(1.0, 3.0, step),   # voice_enhance_strength
@@ -141,26 +162,30 @@ class AudioProcessor:
 
         best_score = float('-inf')
         best_params = None
-        
+
         total_iterations = min(max_iterations, len(list(itertools.product(*param_ranges))))
-        
+
         for params in tqdm(itertools.islice(itertools.product(*param_ranges), max_iterations), 
-                           total=total_iterations, 
-                           desc="Searching for optimal parameters"):
+                          total=total_iterations, 
+                          desc="Searching for optimal parameters"):
             y_enhanced = self._enhance_audio_sample(y_orig, *params)
-            
-            min_length = min(len(y_orig), len(y_enhanced))
-            y_orig_trimmed = y_orig[:min_length]
-            y_enhanced_trimmed = y_enhanced[:min_length]
-            
-            correlation, _ = pearsonr(y_orig_trimmed, y_enhanced_trimmed)
-            
-            S_orig = np.abs(librosa.stft(y_orig_trimmed))
-            S_enhanced = np.abs(librosa.stft(y_enhanced_trimmed))
-            contrast_improvement = np.mean(librosa.feature.spectral_contrast(S=S_enhanced)) - np.mean(librosa.feature.spectral_contrast(S=S_orig))
-            
-            score = correlation + 0.5 * contrast_improvement
-            
+            y_enhanced_tensor = torch.tensor(y_enhanced, device=device)
+
+            # Calculate correlation between original and enhanced audio
+            min_length = min(len(y_orig_tensor), len(y_enhanced_tensor))
+            y_orig_trimmed = y_orig_tensor[:min_length]
+            y_enhanced_trimmed = y_enhanced_tensor[:min_length]
+            correlation = torch.corrcoef(torch.stack([y_orig_trimmed, y_enhanced_trimmed]))[0, 1].item()
+
+            # Calculate spectral contrast improvement
+            contrast_orig = self._compute_spectral_contrast(y_orig, sr)
+            contrast_enhanced = self._compute_spectral_contrast(y_enhanced, sr)
+            contrast_improvement = contrast_enhanced - contrast_orig
+
+            # Combine metrics (weighted sum of correlation and contrast improvement)
+            # We weight contrast improvement more heavily as it's more relevant for speech clarity
+            score = (0.3 * correlation) + (0.7 * contrast_improvement)
+
             if score > best_score:
                 best_score = score
                 best_params = params
@@ -169,18 +194,42 @@ class AudioProcessor:
         return best_params
 
     def _enhance_audio_sample(self, y, noise_reduce_strength=0.5, voice_enhance_strength=1.5, volume_boost=1.2):
-        S = librosa.stft(y)
+        """
+        Enhance an audio sample by reducing noise and enhancing voice clarity.
+        
+        Parameters
+        ----------
+        y : np.ndarray
+            Input audio signal
+        noise_reduce_strength : float
+            Strength of noise reduction (default: 0.5)
+        voice_enhance_strength : float
+            Strength of voice enhancement (default: 1.5)
+        volume_boost : float
+            Volume boost factor (default: 1.2)
+        
+        Returns
+        -------
+        np.ndarray
+            Enhanced audio signal
+        """
+        # Compute STFT without return_complex parameter
+        S = librosa.stft(y, n_fft=2048)
         S_mag, S_phase = np.abs(S), np.angle(S)
         S_filtered = scipy.ndimage.median_filter(S_mag, size=(1, 31))
         
+        # Apply noise reduction mask
         mask = np.clip((S_mag - S_filtered) / (S_mag + 1e-10), 0, 1) ** noise_reduce_strength
         S_denoised = S_mag * mask * np.exp(1j * S_phase)
 
+        # Inverse STFT
         y_denoised = librosa.istft(S_denoised)
 
+        # Harmonic-percussive separation and enhancement
         y_harmonic, y_percussive = librosa.effects.hpss(y_denoised)
         y_enhanced = (y_harmonic * voice_enhance_strength + y_percussive) * volume_boost
 
+        # Normalize the output
         return librosa.util.normalize(y_enhanced, norm=np.inf, threshold=1.0)
 
     # Helper method

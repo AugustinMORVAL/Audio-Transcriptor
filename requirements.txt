@@ -9,8 +9,9 @@ SpeechRecognition
 pyaudio
 tabulate
 soundfile
-torch
 numpy
 transformers
 gradio
 multipart
+torch
+torchaudio
