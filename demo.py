@@ -12,14 +12,13 @@ microphone_transcribe = gr.Interface(
     ],
     outputs=[
         gr.Textbox(label="Transcription"),
-        # gr.File(label="Download Transcription"),
-        # gr.Textbox(label="Console Output", lines=10)
+        # gr.Textbox(label="Logs", lines=3)
     ],
     title="Audio-Transcription leveraging Whisper Model",
     description=(
         "Transcribe microphone recording or audio inputs and return the transcription with speaker diarization."
     ),
-    allow_flagging="never",
+    flagging_mode="never",
 )
 
 file_transcribe = gr.Interface(
@@ -38,10 +37,11 @@ file_transcribe = gr.Interface(
     ],
     outputs=[
         gr.Textbox(label="Transcription"),
+        # gr.Textbox(label="Logs", lines=3)
     ],
     title="Audio-Transcription leveraging Whisper Model",
     description="Transcribe microphone recording or audio inputs and return the transcription with speaker diarization.",
-    allow_flagging="never",
+    flagging_mode="never",
 )
 
 
