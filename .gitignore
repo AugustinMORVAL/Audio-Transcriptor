@@ -1,5 +1,6 @@
 .venv
 .env
+.temp
 __pycache__
 transcripts
 test*

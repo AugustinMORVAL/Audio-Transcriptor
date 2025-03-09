@@ -11,7 +11,6 @@ from .audio_processing import AudioProcessor
 import io
 from contextlib import redirect_stdout
 import sys
-from .utils import TqdmToLogger
 
 load_dotenv()
 
@@ -29,9 +28,6 @@ class Transcriptor:
         - 'base': Fast, good accuracy for many use cases
         - 'small': Balanced speed and accuracy
         - 'medium': High accuracy, slower than smaller models
-        - 'large': High accuracy, slower and more resource-intensive
-        - 'large-v1': Improved version of the large model
-        - 'large-v2': Further improved version of the large model
         - 'large-v3': Latest and most accurate version of the large model
         - 'large-v3-turbo': Optimized version of the large-v3 model for faster processing
     model : whisper.model.Whisper
@@ -98,15 +94,12 @@ class Transcriptor:
             or a tuple of (Transcription, logs string) if buffer_logs=True
         """
         if buffer_logs:
-            # Create a string buffer to capture printed output
             logs_buffer = io.StringIO()
-            # Redirect stdout to our buffer
             with redirect_stdout(logs_buffer):
                 transcription = self._perform_transcription(audio_file_path, enhanced)
                 logs = logs_buffer.getvalue()
                 return transcription, logs
         else:
-            # Direct terminal output
             transcription = self._perform_transcription(audio_file_path, enhanced)
             return transcription
 
@@ -186,10 +179,6 @@ class Transcriptor:
         """Transcribe audio segments based on diarization."""
         transcriptions = []
         
-        # Get the current stdout buffer from the redirect_stdout context
-        buf = tqdm._instances[0].fp if tqdm._instances else sys.stdout
-        
-        # Prepare all segments at once
         audio_segments = []
         for turn, _, speaker in segments:
             start = turn.start
@@ -197,14 +186,13 @@ class Transcriptor:
             segment = audio[int(start * sr):int(end * sr)]
             audio_segments.append((segment, speaker))
         
-        # Process segments with progress bar
         with tqdm(
             total=len(audio_segments),
             desc="Transcribing segments",
             unit="segment",
             ncols=100,
             colour="green",
-            file=TqdmToLogger(buf),
+            file=sys.stdout,
             mininterval=0.1,
             dynamic_ncols=True,
             leave=True
@@ -223,7 +211,7 @@ class Transcriptor:
                     for i in range(0, len(audio_segments), batch_size):
                         try:
                             batch = audio_segments[i:i + batch_size]
-                            torch.cuda.empty_cache() 
+                            torch.cuda.empty_cache()
                             results = self.model([segment for segment, _ in batch])
                             for (_, speaker), result in zip(batch, results):
                                 transcriptions.append((speaker, result['text'].strip()))

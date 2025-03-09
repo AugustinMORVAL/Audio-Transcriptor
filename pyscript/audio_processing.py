@@ -5,7 +5,6 @@ from tabulate import tabulate
 import soundfile as sf
 import scipy.ndimage
 import itertools
-from scipy.stats import pearsonr
 from tqdm import tqdm
 import torch
 import torchaudio
@@ -171,19 +170,17 @@ class AudioProcessor:
             y_enhanced = self._enhance_audio_sample(y_orig, *params)
             y_enhanced_tensor = torch.tensor(y_enhanced, device=device)
 
-            # Calculate correlation between original and enhanced audio
+            # Correlation between original and enhanced audio
             min_length = min(len(y_orig_tensor), len(y_enhanced_tensor))
             y_orig_trimmed = y_orig_tensor[:min_length]
             y_enhanced_trimmed = y_enhanced_tensor[:min_length]
             correlation = torch.corrcoef(torch.stack([y_orig_trimmed, y_enhanced_trimmed]))[0, 1].item()
 
-            # Calculate spectral contrast improvement
+            # Spectral contrast improvement
             contrast_orig = self._compute_spectral_contrast(y_orig, sr)
             contrast_enhanced = self._compute_spectral_contrast(y_enhanced, sr)
             contrast_improvement = contrast_enhanced - contrast_orig
 
-            # Combine metrics (weighted sum of correlation and contrast improvement)
-            # We weight contrast improvement more heavily as it's more relevant for speech clarity
             score = (0.3 * correlation) + (0.7 * contrast_improvement)
 
             if score > best_score:
@@ -213,12 +210,12 @@ class AudioProcessor:
         np.ndarray
             Enhanced audio signal
         """
-        # Compute STFT without return_complex parameter
+        # STFT
         S = librosa.stft(y, n_fft=2048)
         S_mag, S_phase = np.abs(S), np.angle(S)
         S_filtered = scipy.ndimage.median_filter(S_mag, size=(1, 31))
         
-        # Apply noise reduction mask
+        # Noise reduction mask
         mask = np.clip((S_mag - S_filtered) / (S_mag + 1e-10), 0, 1) ** noise_reduce_strength
         S_denoised = S_mag * mask * np.exp(1j * S_phase)
 
@@ -229,7 +226,6 @@ class AudioProcessor:
         y_harmonic, y_percussive = librosa.effects.hpss(y_denoised)
         y_enhanced = (y_harmonic * voice_enhance_strength + y_percussive) * volume_boost
 
-        # Normalize the output
         return librosa.util.normalize(y_enhanced, norm=np.inf, threshold=1.0)
 
     # Helper method
