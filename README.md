@@ -223,7 +223,9 @@ transcription.save()
 
 ## Try the demo
 
-The project includes a user-friendly web interface built with Gradio for easy testing and demonstration. Check it out:
+The project includes a user-friendly web interface built with Gradio for easy testing and demonstration. Check it out: https://huggingface.co/spaces/Tingusto/audio-transcriptor
+
+![App Interface](src/img/app.png)
 
 ## Contributing
 
