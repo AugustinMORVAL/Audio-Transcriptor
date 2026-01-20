@@ -11,6 +11,6 @@ soundfile==0.12.1
 numpy==1.26.4
 transformers==4.53.0
 gradio==5.23.0
-torch==2.4.1
+torch==2.8.0
 torchaudio==2.4.1
 python-multipart==0.0.12
